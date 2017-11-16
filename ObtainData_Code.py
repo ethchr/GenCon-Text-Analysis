@@ -46,3 +46,5 @@ print(soup1.get_text())
 #This gets the text, and a whole lot more. Including conference (but NOT session), speaker, speaker's title, talk title, and topic tags assigned to talk on lds.org. The problem is that it includes a ton of extra stuff. So I'll need to pare away all the other stuff to get just the text, but at the same time dive into the other stuff to get those other parts. Will be a little tricky but we'll see.
 
 #####Trying to save from ATOM back up to the github
+
+#####It Worked
