@@ -48,3 +48,5 @@ print(soup1.get_text())
 #####Trying to save from ATOM back up to the github
 
 #####It Worked
+
+##Direct from Atom 
