@@ -49,4 +49,4 @@ print(soup1.get_text())
 
 #####It Worked
 
-##Direct from Atom 
+##Direct from Atom
