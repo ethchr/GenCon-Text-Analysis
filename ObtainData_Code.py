@@ -24,8 +24,8 @@ len(talktiles)
 #I was having problems earlier not capturing every talk link, this says I got it right.
 
 #This ignores the talktiles object and just finds literally every link on the page. Given that it mixes mp3,mp4, text, and menu links, I'm not really sure that this is a good approach. Still, it gives a sense for the links on the page.
-for link in soup.find_all('a'):
-    print(link.get('href'))
+#for link in soup.find_all('a'):
+#    print(link.get('href'))
 
 prefix = "www.lds.org"
 #All of the talk links need to have this prefix added before being used to scrape text.
@@ -42,7 +42,31 @@ prefix = "www.lds.org"
 
 
 ############Just reading in the text:
-print(soup1.get_text())
+#print(soup1.get_text())
+#print(soup1.prettify().encode('cp1252', errors='replace').decode('cp1252'))
+block = soup1.find('div', class_="body-block")
+block.find_all('p')
+
+f = open('bodytest.txt', 'w')
+f.write(soup1.title.text)
+f.close()
+
+f = open('bodytest.txt', 'a')
+for par in block.find_all('p'):
+    f.write('\n' + par.get_text())
+f.close()
+#### YESSS IT WORKED!!!!!
+#From this I have the title, author, and text for a single conference talk.
+
+
+#chunk = []
+#for element in block.find_all():
+#    if element.name == 'p':
+#        chunk.append(element)
+#text = chunk.get_text()
+#print(text)
+#page = soup1.find('p').getText()
+#print(page)
 #This gets the text, and a whole lot more. Including conference (but NOT session), speaker, speaker's title, talk title, and topic tags assigned to talk on lds.org. The problem is that it includes a ton of extra stuff. So I'll need to pare away all the other stuff to get just the text, but at the same time dive into the other stuff to get those other parts. Will be a little tricky but we'll see.
 
 #####Trying to save from ATOM back up to the github
