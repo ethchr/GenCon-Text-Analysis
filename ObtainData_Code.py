@@ -1,76 +1,78 @@
 ##Imports that I need to pull the data:
 import requests
 from bs4 import BeautifulSoup
-
-##Okay, this bit all works. url is a conference page with links, and url1 is a specific talk with text.
-#These are just me working through the process, I will need to run some sort of loop on conference page links to get each individual talk.
-url = 'https://www.lds.org/general-conference/2017/04?lang=eng'
-url1 = 'https://www.lds.org/general-conference/2017/04/gathering-the-family-of-god?lang=eng'
-r = requests.get(url)
-r1 = requests.get(url1)
-html = r.text
-html1 = r1.text
-
-#I don't know if "lxml" is the best choice, honestly its the default. Seems to work okay.
-soup = BeautifulSoup(html, "lxml")
-soup1 = BeautifulSoup(html1, "lxml")
-
-soup.title
-soup1.title
-#Okay, so we see that each one has actually got the page we wanted.
-
-talktiles = soup.find_all("div", class_="lumen-tile lumen-tile--horizontal lumen-tile--list")
-len(talktiles)
-#I was having problems earlier not capturing every talk link, this says I got it right.
-
-#This ignores the talktiles object and just finds literally every link on the page. Given that it mixes mp3,mp4, text, and menu links, I'm not really sure that this is a good approach. Still, it gives a sense for the links on the page.
-#for link in soup.find_all('a'):
-#    print(link.get('href'))
-
-prefix = "www.lds.org"
-#All of the talk links need to have this prefix added before being used to scrape text.
-
-####The code below is based on some demos, but it doesn't work yet for me.
-#talksurls = {}
-#for element in talktiles:
-#    talksurls[element.a.get_text()]
-#for element in talktiles:
-#    talksurls[element.a.get_text()]["link"] = prefix + element.a["href"]
-#for item in talksurls.keys():
-#    print(item + ": " + "\n\t" + "link: " + talksurls[item]["link"] + "\n\n")
-#### Ideally, that would give me a dictionary with each url I need from that conference.
+import os
+import time
+import csv
+#These things need to stay out of the loop
+prefix = "https://www.lds.org"
+metalist = []
+totalcounter = 0
 
 
-############Just reading in the text:
-#print(soup1.get_text())
-#print(soup1.prettify().encode('cp1252', errors='replace').decode('cp1252'))
-block = soup1.find('div', class_="body-block")
-block.find_all('p')
-
-f = open('bodytest.txt', 'w')
-f.write(soup1.title.text)
-f.close()
-
-f = open('bodytest.txt', 'a')
-for par in block.find_all('p'):
-    f.write('\n' + par.get_text())
-f.close()
-#### YESSS IT WORKED!!!!!
-#From this I have the title, author, and text for a single conference talk.
+#####https://archive.org/details/conferencereport
+##This sucker has EVERY conference report since 1880. And at least most of the time, there's a text file. Praises be.
+#This makes things so much easier. Assuming I can trust the text, anyway
+#Potential extension: https://archive.org/details/churchhistorylibraryperiodicals
+#Old church magazines.
+#Once I get into the analysis stage, see this:
+#https://github.com/cbail/textnets
 
 
-#chunk = []
-#for element in block.find_all():
-#    if element.name == 'p':
-#        chunk.append(element)
-#text = chunk.get_text()
-#print(text)
-#page = soup1.find('p').getText()
-#print(page)
-#This gets the text, and a whole lot more. Including conference (but NOT session), speaker, speaker's title, talk title, and topic tags assigned to talk on lds.org. The problem is that it includes a ton of extra stuff. So I'll need to pare away all the other stuff to get just the text, but at the same time dive into the other stuff to get those other parts. Will be a little tricky but we'll see.
+#Here's the overarching bit pulling from the all conferences page
+#confurllist contains all of the conference specific urls to pull from.
+urlm = 'https://www.lds.org/general-conference/conferences?lang=eng'
+rm = requests.get(urlm)
+htmlm = rm.text
 
-#####Trying to save from ATOM back up to the github
+soupm = BeautifulSoup(htmlm, "lxml")
+confurllist = []
+for t in soupm.find_all("div", class_= "year-line"):
+    confurllist.append(prefix + t.find('a')['href'])
 
-#####It Worked
 
-##Direct from Atom
+#I'm going to try to make it save all the files into a folder
+save_path = 'C:/Users/Ethan/Documents/Github/GenCon-Text-Analysis/text_folder/'
+
+#Now I need a loop through confurllist
+
+for url in confurllist:
+    r = requests.get(url)
+    html = r.text
+    soup = BeautifulSoup(html, "lxml")
+    #Urls for the talks in a conference in urllist
+    urllist = []
+    for t in soup.find_all("div", class_="lumen-tile lumen-tile--horizontal lumen-tile--list"):
+        urllist.append(prefix + t.find('a')['href'])
+    for talk in urllist:
+        url1 = talk
+        r1 = requests.get(url1)
+        html1 = r1.text
+        soup1 = BeautifulSoup(html1, "lxml")
+        block = soup1.find('div', class_="body-block")
+        totalcounter = totalcounter + 1
+        print(totalcounter)
+        metalist.append([soup1.title.string, totalcounter, url])
+        name_of_file = 'talk' + str(totalcounter)
+        completename = os.path.join(save_path, name_of_file + ".txt")
+        f = open(completename,"w")
+        for par in block.find_all('p'):
+            f.write('\n' + par.get_text().encode('cp1252', errors='replace').decode('cp1252'))
+        f.close()
+    print("You've finished" + str(totalcounter))
+    time.sleep(5)
+
+# I have the metadata in the list, I need to export it.
+save_path_meta = 'C:/Users/Ethan/Documents/Github/GenCon-Text-Analysis/'
+name_of_metafile = 'talktitles'
+completenamemeta = os.path.join(save_path_meta, name_of_metafile + ".csv")
+
+with open(completenamemeta, "w") as output:
+    writer = csv.writer(output, lineterminator='\n')
+    writer.writerows(metalist)
+
+#This meta data has the title (which is formatted "title - Author")
+#I can split this to grab the author
+#I don't have the year, conference (actually yes, contained in URL), or session yet.
+#In the future, I don't have to write the files out, so I can grab the other
+#info much more quickly.
