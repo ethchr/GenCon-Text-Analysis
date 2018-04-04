@@ -31,4 +31,4 @@ Note that currently, I am using this readme file as notes about what I need to f
 4. Reporting
  * The first reporting I will probably do is simple word bubbles, which can be done for free elsewhere but I want to learn how to do them.
  * later reporting should include graphs of various sorts, this will be my practice with datavis.
- *
+ * This line is honestly just to give me an excuse to run a commit and see how slack integration is working.
